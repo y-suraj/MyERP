@@ -1,0 +1,291 @@
+{% load currency_filters %}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        /* PAGE FRAME for Page Numbers */
+        @page {
+            size: a4 portrait;
+            margin: 1cm;
+            margin-bottom: 2cm;
+
+            @frame footer_frame {
+                -pdf-frame-content: pageNumberContent;
+                bottom: 0cm;
+                height: 1cm;
+                width: 100%;
+                margin-left: 1cm;
+                margin-right: 1cm;
+            }
+        }
+
+        body {
+            font-family: Helvetica, sans-serif;
+            font-size: 12px;
+            color: #333;
+        }
+
+        .header-table {
+            width: 100%;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .company-details {
+            font-size: 10px;
+            line-height: 1.4;
+        }
+
+        .invoice-box {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .invoice-box table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .invoice-box td {
+            padding: 5px;
+            vertical-align: top;
+        }
+
+        /* Items Table */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .items-table th {
+            background: #eee;
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .items-table td {
+            border: 1px solid #000;
+            padding: 8px;
+            vertical-align: middle;
+        }
+
+        /* Alignments */
+        .col-center {
+            text-align: center;
+        }
+
+        .col-right {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        /* Prevent wrapping numbers */
+
+        /* Totals Table */
+        .totals-table {
+            width: 50%;
+            float: right;
+            margin-top: 10px;
+            border-collapse: collapse;
+        }
+
+        .totals-table td {
+            padding: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .total-row {
+            font-weight: bold;
+            background: #eee;
+            font-size: 14px;
+        }
+
+        /* Amount Words & Footer */
+        .amount-words {
+            width: 100%;
+            border: 1px solid #000;
+            padding: 8px;
+            background: #f9f9f9;
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        .footer-table {
+            width: 100%;
+            margin-top: 30px;
+            border-collapse: collapse;
+        }
+
+        .footer-box {
+            width: 50%;
+            border: 1px solid #000;
+            padding: 10px;
+            font-size: 10px;
+            vertical-align: top;
+        }
+
+        .signature-section {
+            width: 100%;
+            text-align: right;
+            margin-top: 40px;
+            padding-right: 10px;
+        }
+
+        .page-num-text {
+            text-align: right;
+            font-size: 10px;
+            color: #666;
+            padding-top: 5px;
+            border-top: 1px solid #ccc;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="pageNumberContent" class="page-num-text">
+        Page <pdf:pagenumber> of <pdf:pagecount>
+    </div>
+
+    <table class="header-table">
+        <tr>
+            <td width="60%">
+                <div class="company-name">SURAJ INDUSTRIES</div>
+                <div class="company-details">
+                    Survey No. 292/1, Baroda Halol Road, Anandpura, Baska<br>
+                    Ta. Halol, Dist. Panchmahal - 389 350.<br>
+                    <strong>GSTIN:</strong> 24AAOPY2351G1ZH <br>
+                    <strong>Email:</strong> surajindustries234@gmail.com
+                </div>
+            </td>
+            <td width="40%" align="right">
+                <h2 style="margin:0;">TAX INVOICE</h2>
+                <br>
+                <strong>Invoice No:</strong> {{ invoice.invoice_number }}<br>
+                <strong>Date:</strong> {{ invoice.date|date:"d-M-Y" }}<br>
+                {% if invoice.po_number %}<strong>PO No:</strong> {{ invoice.po_number }}<br>{% endif %}
+                {% if invoice.vehicle_number %}<strong>Vehicle:</strong> {{ invoice.vehicle_number|upper }}
+                <br>{% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <table class="invoice-box">
+        <tr>
+            <td width="50%" style="border: 1px solid #000;">
+                <strong>BILL TO:</strong><br>
+                {{ invoice.customer.name }}<br>
+                {{ invoice.customer.address|linebreaksbr }}<br>
+                <strong>GSTIN:</strong> {{ invoice.customer.gstin }}<br>
+                <strong>State:</strong> {{ invoice.customer.get_state_display }}
+            </td>
+            <td width="50%" style="border: 1px solid #000;">
+                <strong>SHIP TO:</strong><br>
+                {{ invoice.customer.name }}<br>
+                {{ invoice.customer.address|linebreaksbr }}<br>
+            </td>
+        </tr>
+    </table>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th width="5%">#</th>
+                <th width="30%">Item Description</th>
+                <th width="10%">HSN/SAC</th>
+                <th width="10%">GST %</th>
+                <th width="10%">Qty</th>
+                <th width="10%">Unit</th>
+                <th width="10%">Rate</th>
+                <th width="15%">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in invoice.items.all %}
+            <tr>
+                <td class="col-center">{{ forloop.counter }}</td>
+                <td>{{ item.product.name }}</td>
+                <td class="col-center">{{ item.product.hsn_code }}</td>
+                <td class="col-center">{{ item.product.gst_rate }}%</td>
+                <td class="col-center">{{ item.quantity }}</td>
+                <td class="col-center">{{ item.product.unit }}</td>
+                <td class="col-right">{{ item.rate|indian_currency }}</td>
+                <td class="col-center">{{ item.amount|indian_currency }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <table class="totals-table">
+        <tr>
+            <td>Taxable Value</td>
+            <td class="col-right">{{ invoice.total_amount|indian_currency }}</td>
+        </tr>
+
+        {% if invoice.igst_total > 0 %}
+        <tr>
+            <td>Add: IGST</td>
+            <td class="col-right">{{ invoice.igst_total|indian_currency }}</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td>Add: CGST</td>
+            <td class="col-right">{{ invoice.cgst_total|indian_currency }}</td>
+        </tr>
+        <tr>
+            <td>Add: SGST</td>
+            <td class="col-right">{{ invoice.sgst_total|indian_currency }}</td>
+        </tr>
+        {% endif %}
+
+        <tr class="total-row">
+            <td>GRAND TOTAL</td>
+            <td class="col-right">₹ {{ invoice.grand_total|indian_currency }}</td>
+        </tr>
+    </table>
+
+    <div style="clear:both;"></div>
+
+    <div class="amount-words">
+        <strong>Amount in Words:</strong> {{ amount_in_words }} Only.
+    </div>
+
+    <table class="footer-table">
+        <tr>
+            <td class="footer-box" style="border-right: 1px solid #000;">
+                <strong>Company's Bank Details:</strong><br>
+                Bank Name: Bank Of India<br>
+                A/c No: 251830110000018<br>
+                IFSC: BKID0002518<br>
+                Branch: Gotri Road
+            </td>
+            <td class="footer-box">
+                <strong>Terms & Conditions:</strong><br>
+                1. Interest @24% p.a. on overdue unpaid bills.<br>
+                2. Goods once sold cannot be exchanged.<br>
+                3. Subject to Halol Jurisdiction.
+            </td>
+        </tr>
+    </table>
+
+    <div class="signature-section">
+        __________________________<br>
+        <strong>For SURAJ INDUSTRIES</strong><br>
+        Authorised Signatory
+    </div>
+
+</body>
+
+</html>

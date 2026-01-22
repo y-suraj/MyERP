@@ -1,0 +1,51 @@
+{% extends 'admin/change_form.html' %}
+
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function (event) {
+        // 1. Check if we are supposed to print
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('print_pdf')) {
+
+            // 2. SMARTER ID FINDER (The Fix)
+            // We look specifically for the number between 'invoice/' and '/change/'
+            // The regex matches: /invoice/ (digits) /change/
+            const path = window.location.pathname;
+            const match = path.match(/\/invoice\/(\d+)\/change/);
+
+            if (match && match[1]) {
+                const invoiceId = match[1]; // This is the actual ID (e.g., 254)
+                const printUrl = "/invoice/" + invoiceId + "/pdf/?action=print";
+
+                // 3. Show fallback link
+                const msgRow = document.querySelector('.messagelist');
+                if (msgRow) {
+                    const li = document.createElement('li');
+                    li.className = 'warning';
+                    li.style.fontSize = '16px';
+                    li.style.padding = '10px';
+                    li.innerHTML = 'Printing... <strong><a href="' + printUrl + '" target="_blank">Click here if PDF did not open</a></strong>';
+                    msgRow.appendChild(li);
+                }
+
+                // 4. Open popup
+                window.open(printUrl, "printerWin", "height=800,width=1024,resizable=yes,scrollbars=yes,status=yes");
+            } else {
+                console.error("Could not find invoice ID in URL");
+            }
+        }
+    });
+</script>
+{% endblock %}
+
+{% block submit_buttons_bottom %}
+<div class="submit-row">
+    <input type="submit" value="Save" class="default" name="_save">
+    <input type="submit" value="Save and add another" name="_addanother">
+    <input type="submit" value="Save and continue editing" name="_continue">
+
+    <input type="submit" value="Save & Print" name="_save_print"
+        style="background-color: #0056b3; color: white; font-weight: bold; margin-left: 10px;">
+</div>
+{% endblock %}
