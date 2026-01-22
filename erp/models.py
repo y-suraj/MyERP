@@ -109,23 +109,25 @@ class InvoiceItem(models.Model):
 
 class Production(models.Model):
     date = models.DateField(default=timezone.now)
-    
-    # OUTPUT (Finished Good)
     finished_good = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='produced_in', verbose_name="Finished Good Produced")
     output_qty = models.DecimalField(max_digits=10, decimal_places=2, help_text="Qty Produced (KGS)")
     waste_qty = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Waste Generated (KGS)")
-    
-    # Note: We removed 'input' fields from here because they are now in the child model
     
     def __str__(self):
         return f"PROD-{self.id} | {self.date} | {self.finished_good.name}"
 
     def save(self, *args, **kwargs):
-        # STOCK LOGIC: Only add stock when creating NEW entry
+        # 1. CREATE: Add Stock
         if not self.pk:
             self.finished_good.current_stock += self.output_qty
             self.finished_good.save()
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        # 2. DELETE: Reverse (Subtract) Stock
+        self.finished_good.current_stock -= self.output_qty
+        self.finished_good.save()
+        super().delete(*args, **kwargs)
 
 class ProductionInput(models.Model):
     production = models.ForeignKey(Production, on_delete=models.CASCADE, related_name='inputs')
@@ -136,8 +138,14 @@ class ProductionInput(models.Model):
         return f"{self.raw_material.name} - {self.quantity}"
 
     def save(self, *args, **kwargs):
-        # STOCK LOGIC: Only subtract stock when creating NEW entry
+        # 1. CREATE: Subtract Stock
         if not self.pk:
             self.raw_material.current_stock -= self.quantity
             self.raw_material.save()
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        # 2. DELETE: Reverse (Add Back) Stock
+        self.raw_material.current_stock += self.quantity
+        self.raw_material.save()
+        super().delete(*args, **kwargs)
