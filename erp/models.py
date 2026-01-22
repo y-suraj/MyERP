@@ -6,13 +6,26 @@ from django.dispatch import receiver
 # --- CORE MODELS ---
 
 class Party(models.Model):
-    PARTY_TYPES = [('customer', 'Customer'), ('vendor', 'Vendor')]
+    PARTY_TYPES = [
+        ('customer', 'Customer'), 
+        ('vendor', 'Vendor'), 
+        ('both', 'Customer & Vendor')
+    ]
+    
+    STATE_CHOICES = [
+        ('Gujarat', 'Gujarat'), 
+        ('Maharashtra', 'Maharashtra'), 
+        ('Delhi', 'Delhi'),
+        ('Rajasthan', 'Rajasthan'),
+        ('Madhya Pradesh', 'Madhya Pradesh')
+    ]
+
     name = models.CharField(max_length=100)
     party_type = models.CharField(max_length=10, choices=PARTY_TYPES)
     address = models.TextField()
     gstin = models.CharField(max_length=15, unique=True)
     phone = models.CharField(max_length=15, blank=True)
-    state = models.CharField(max_length=50, choices=[('Gujarat', 'Gujarat'), ('Maharashtra', 'Maharashtra'), ('Delhi', 'Delhi')], default='Gujarat')
+    state = models.CharField(max_length=50, choices=STATE_CHOICES, default='Gujarat')
 
     def __str__(self):
         return f"{self.name} ({self.party_type})"
@@ -29,10 +42,15 @@ class Product(models.Model):
 
 # --- INVOICE MODELS ---
 
+# --- INVOICE MODELS ---
+
 class Invoice(models.Model):
     invoice_number = models.CharField(max_length=20, unique=True)
     date = models.DateField(default=timezone.now)
-    customer = models.ForeignKey(Party, on_delete=models.CASCADE, limit_choices_to={'party_type': 'customer'})
+    
+    # UPDATE: Removed 'limit_choices_to'. Now shows ALL parties (Customer, Vendor, Both).
+    customer = models.ForeignKey(Party, on_delete=models.CASCADE)
+    
     po_number = models.CharField(max_length=50, blank=True, verbose_name="PO Number")
     vehicle_number = models.CharField(max_length=20, blank=True, verbose_name="Vehicle Number")
     
@@ -60,6 +78,7 @@ class InvoiceItem(models.Model):
         gst_percent = self.product.gst_rate
         tax_amount = (self.amount * gst_percent) / 100
         
+        # Calculate Tax based on State
         if self.invoice.customer.state == 'Gujarat':
             self.cgst = tax_amount / 2
             self.sgst = tax_amount / 2
@@ -92,27 +111,23 @@ class ProductionInput(models.Model):
 
 # --- SIGNALS (THE RELIABLE STOCK LOGIC) ---
 
-# 1. When Finished Good is CREATED -> Add to Stock
 @receiver(post_save, sender=Production)
 def add_fg_stock(sender, instance, created, **kwargs):
     if created:
         instance.finished_good.current_stock += instance.output_qty
         instance.finished_good.save()
 
-# 2. When Finished Good is DELETED -> Subtract from Stock
 @receiver(post_delete, sender=Production)
 def remove_fg_stock(sender, instance, **kwargs):
     instance.finished_good.current_stock -= instance.output_qty
     instance.finished_good.save()
 
-# 3. When Raw Material Input is CREATED -> Subtract from Stock
 @receiver(post_save, sender=ProductionInput)
 def remove_rm_stock(sender, instance, created, **kwargs):
     if created:
         instance.raw_material.current_stock -= instance.quantity
         instance.raw_material.save()
 
-# 4. When Raw Material Input is DELETED -> Add back to Stock
 @receiver(post_delete, sender=ProductionInput)
 def restore_rm_stock(sender, instance, **kwargs):
     instance.raw_material.current_stock += instance.quantity

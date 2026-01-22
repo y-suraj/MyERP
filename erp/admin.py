@@ -41,7 +41,7 @@ class InvoiceAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         return ('total_amount', 'cgst_total', 'sgst_total', 'igst_total', 'grand_total')
 
-    # --- 2. NEW SAVE & PRINT LOGIC ---
+    # --- 2. SAVE & PRINT LOGIC ---
     def response_add(self, request, obj, post_url_continue=None):
         if "_save_print" in request.POST:
             self.message_user(request, "Invoice Saved. Opening Print Window...", messages.SUCCESS)
@@ -80,7 +80,7 @@ class InvoiceAdmin(admin.ModelAdmin):
 # --- FACTORY / PRODUCTION CONFIGURATION ---
 
 class ProductionInputInline(admin.TabularInline):
-    model = ProductionInput  # Now this will work because we imported it!
+    model = ProductionInput
     extra = 1
     autocomplete_fields = ['raw_material']
 
