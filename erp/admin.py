@@ -1,3 +1,4 @@
+from import_export.admin import ImportExportModelAdmin
 from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
@@ -8,12 +9,12 @@ from .models import Product, Party, Invoice, InvoiceItem, Production, Production
 
 # --- Product & Party Admins ---
 @admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
+class ProductAdmin(ImportExportModelAdmin):
     list_display = ('name', 'current_stock', 'unit', 'gst_rate')
     search_fields = ('name',)
 
 @admin.register(Party)
-class PartyAdmin(admin.ModelAdmin):
+class PartyAdmin(ImportExportModelAdmin):
     list_display = ('name', 'party_type', 'gstin', 'phone', 'state')
     search_fields = ('name', 'gstin')
     list_filter = ('party_type', 'state')
@@ -26,17 +27,33 @@ class InvoiceItemInline(admin.TabularInline):
     readonly_fields = ('amount', 'cgst', 'sgst', 'igst')
 
 @admin.register(Invoice)
-class InvoiceAdmin(admin.ModelAdmin):
+class InvoiceAdmin(ImportExportModelAdmin):
     list_display = ('invoice_number', 'date', 'customer', 'grand_total', 'pdf_button')
     search_fields = ('invoice_number', 'customer__name', 'po_number')
     list_filter = ('date', 'customer')
     inlines = [InvoiceItemInline]
 
     # --- 1. HIDE ZEROS LOGIC ---
+    # REPLACE your old get_fieldsets with this new one:
     def get_fieldsets(self, request, obj=None):
-        fieldsets = [('Basic Info', {'fields': ('customer', 'invoice_number', 'date', 'po_number', 'vehicle_number')})]
-        if obj: fieldsets.append(('Totals', {'fields': ('total_amount', 'cgst_total', 'sgst_total', 'igst_total', 'grand_total'), 'classes': ('collapse',)}))
+        fieldsets = [
+            ('Basic Info', {
+                'fields': ('customer', 'invoice_number', 'date', 'po_number', 'vehicle_number')
+            }),
+            # NEW: Shipping Section with the checkbox description
+            ('Shipping Details', {
+                'fields': ('shipping_name', 'shipping_address', 'shipping_state', 'shipping_gstin'),
+                'description': '<input type="checkbox" id="same_as_bill_to" checked style="margin-right:5px;"> <strong>Ship to same address as Customer?</strong> (Uncheck to edit)'
+            }),
+        ]
+        # Logic to only show Totals when editing (hides zeros on new invoices)
+        if obj:
+            fieldsets.append(('Totals', {'fields': ('total_amount', 'cgst_total', 'sgst_total', 'igst_total', 'grand_total'), 'classes': ('collapse',)}))
         return fieldsets
+
+    # ADD this at the bottom of the InvoiceAdmin class (indentation must match the def above)
+    class Media:
+        js = ('admin/js/invoice_shipping.js',)
 
     def get_readonly_fields(self, request, obj=None):
         return ('total_amount', 'cgst_total', 'sgst_total', 'igst_total', 'grand_total')
@@ -66,6 +83,10 @@ class InvoiceAdmin(admin.ModelAdmin):
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)
         invoice = form.instance
+
+        for item in invoice.items.all():
+            item.save()
+
         total = sum(item.amount for item in invoice.items.all())
         cgst = sum(item.cgst for item in invoice.items.all())
         sgst = sum(item.sgst for item in invoice.items.all())
@@ -85,7 +106,7 @@ class ProductionInputInline(admin.TabularInline):
     autocomplete_fields = ['raw_material']
 
 @admin.register(Production)
-class ProductionAdmin(admin.ModelAdmin):
+class ProductionAdmin(ImportExportModelAdmin):
     list_display = ('date', 'finished_good', 'output_qty', 'waste_qty', 'total_input_qty')
     list_filter = ('date', 'finished_good')
     inlines = [ProductionInputInline]

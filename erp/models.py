@@ -53,7 +53,16 @@ class Invoice(models.Model):
     
     po_number = models.CharField(max_length=50, blank=True, verbose_name="PO Number")
     vehicle_number = models.CharField(max_length=20, blank=True, verbose_name="Vehicle Number")
+    # ... previous fields ...
+    vehicle_number = models.CharField(max_length=20, blank=True, verbose_name="Vehicle Number")
     
+    # --- NEW SHIPPING FIELDS ---
+    shipping_name = models.CharField(max_length=100, blank=True, verbose_name="Ship To Name")
+    shipping_address = models.TextField(blank=True, verbose_name="Ship To Address")
+    shipping_state = models.CharField(max_length=50, choices=Party.STATE_CHOICES, blank=True, verbose_name="Ship To State")
+    shipping_gstin = models.CharField(max_length=15, blank=True, verbose_name="Ship To GSTIN")
+    
+    # ... total_amount ...
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     cgst_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     sgst_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)

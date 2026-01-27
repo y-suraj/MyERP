@@ -193,8 +193,17 @@
             </td>
             <td width="50%" style="border: 1px solid #000;">
                 <strong>SHIP TO:</strong><br>
+                {% if invoice.shipping_name %}
+                {{ invoice.shipping_name }}<br>
+                {{ invoice.shipping_address|linebreaksbr }}<br>
+                <strong>GSTIN:</strong> {{ invoice.shipping_gstin }}<br>
+                <strong>State:</strong> {{ invoice.shipping_state }}
+                {% else %}
                 {{ invoice.customer.name }}<br>
                 {{ invoice.customer.address|linebreaksbr }}<br>
+                <strong>GSTIN:</strong> {{ invoice.customer.gstin }}<br>
+                <strong>State:</strong> {{ invoice.customer.get_state_display }}
+                {% endif %}
             </td>
         </tr>
     </table>

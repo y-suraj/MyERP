@@ -30,8 +30,18 @@ def generate_invoice_pdf(request, invoice_id):
     amount_in_words = amount_in_words.replace(' Inr And ', ' INR and ')
 
     # 2. Render HTML
+    # --- NEW: Get Tax Rate for display ---
+    first_item = invoice.items.first()
+    tax_rate = first_item.product.gst_rate if first_item else 0
+    cgst_rate = tax_rate / 2
+    
     template_path = 'erp/invoice_pdf.html'
-    context = {'invoice': invoice, 'amount_in_words': amount_in_words}
+    context = {
+        'invoice': invoice, 
+        'amount_in_words': amount_in_words,
+        'tax_rate': tax_rate,      # e.g., 18.00
+        'cgst_rate': cgst_rate     # e.g., 9.00
+    }
     template = get_template(template_path)
     html = template.render(context)
     
