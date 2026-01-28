@@ -1,3 +1,6 @@
+import openpyxl
+from django.http import HttpResponse
+from datetime import datetime
 from import_export.admin import ImportExportModelAdmin
 from django.contrib import admin
 from django.utils.html import format_html
@@ -26,11 +29,52 @@ class InvoiceItemInline(admin.TabularInline):
     extra = 1
     readonly_fields = ('amount', 'cgst', 'sgst', 'igst')
 
+def export_invoices_detailed(modeladmin, request, queryset):
+    # 1. Setup Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Detailed Invoices"
+
+    # 2. Write Headers
+    headers = ['Date', 'Invoice No', 'Customer', 'GSTIN', 'Product', 'HSN', 'Qty', 'Unit', 'Rate', 'Amount', 'CGST', 'SGST', 'IGST', 'Total Line Item']
+    ws.append(headers)
+
+    # 3. Loop through selected Invoices
+    for invoice in queryset:
+        # Loop through every item inside the invoice
+        for item in invoice.items.all():
+            # Write a row for this specific item
+            ws.append([
+                invoice.date,                   # Date
+                invoice.invoice_number,         # Invoice No
+                invoice.customer.name,          # Customer
+                invoice.customer.gstin,         # GSTIN
+                item.product.name,              # Product Name
+                item.product.hsn_code,          # HSN
+                item.quantity,                  # Qty
+                item.product.unit,              # Unit
+                item.rate,                      # Rate
+                item.amount,                    # Taxable Value
+                item.cgst,                      # CGST
+                item.sgst,                      # SGST
+                item.igst,                      # IGST
+                item.amount + item.cgst + item.sgst + item.igst  # Total for this item
+            ])
+
+    # 4. Return file
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename=Sales_Register_{datetime.now().strftime("%Y-%m-%d")}.xlsx'
+    wb.save(response)
+    return response
+
+export_invoices_detailed.short_description = "Export Detailed Report (Excel)"
+
 @admin.register(Invoice)
 class InvoiceAdmin(ImportExportModelAdmin):
     list_display = ('invoice_number', 'date', 'customer', 'grand_total', 'pdf_button')
     search_fields = ('invoice_number', 'customer__name', 'po_number')
     list_filter = ('date', 'customer')
+    actions = [export_invoices_detailed]
     inlines = [InvoiceItemInline]
 
     # --- 1. HIDE ZEROS LOGIC ---
@@ -115,11 +159,4 @@ class ProductionAdmin(ImportExportModelAdmin):
         total = sum(item.quantity for item in obj.inputs.all())
         return f"{total} KGS"
     total_input_qty.short_description = "Total Input"
-
-@admin.register(InvoiceItem)
-class InvoiceItemAdmin(ImportExportModelAdmin):
-    # This lets you see specific line items in the admin and export them
-    list_display = ('invoice', 'product', 'quantity', 'rate', 'amount')
-    list_filter = ('product', 'invoice__date')
-    search_fields = ('invoice__invoice_number', 'product__name')
 
