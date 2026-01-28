@@ -186,7 +186,7 @@
         <tr>
             <td width="50%" style="border: 1px solid #000;">
                 <strong>BILL TO:</strong><br>
-                {{ invoice.customer.name }}<br>
+                <strong>{{ invoice.customer.name }}</strong><br>
                 {{ invoice.customer.address|linebreaksbr }}<br>
                 <strong>GSTIN:</strong> {{ invoice.customer.gstin }}<br>
                 <strong>State:</strong> {{ invoice.customer.get_state_display }}
@@ -194,12 +194,12 @@
             <td width="50%" style="border: 1px solid #000;">
                 <strong>SHIP TO:</strong><br>
                 {% if invoice.shipping_name %}
-                {{ invoice.shipping_name }}<br>
+                <strong>{{ invoice.shipping_name }}</strong><br>
                 {{ invoice.shipping_address|linebreaksbr }}<br>
                 <strong>GSTIN:</strong> {{ invoice.shipping_gstin }}<br>
                 <strong>State:</strong> {{ invoice.shipping_state }}
                 {% else %}
-                {{ invoice.customer.name }}<br>
+                <strong>{{ invoice.customer.name }}</strong><br>
                 {{ invoice.customer.address|linebreaksbr }}<br>
                 <strong>GSTIN:</strong> {{ invoice.customer.gstin }}<br>
                 <strong>State:</strong> {{ invoice.customer.get_state_display }}
@@ -230,7 +230,7 @@
                 <td class="col-center">{{ item.product.gst_rate }}%</td>
                 <td class="col-center">{{ item.quantity }}</td>
                 <td class="col-center">{{ item.product.unit }}</td>
-                <td class="col-right">{{ item.rate|indian_currency }}</td>
+                <td class="col-center">{{ item.rate|indian_currency }}</td>
                 <td class="col-center">{{ item.amount|indian_currency }}</td>
             </tr>
             {% endfor %}
@@ -261,7 +261,7 @@
 
         <tr class="total-row">
             <td>GRAND TOTAL</td>
-            <td class="col-right">₹ {{ invoice.grand_total|indian_currency }}</td>
+            <td class="col-right">Rs. {{ invoice.grand_total|indian_currency }}</td>
         </tr>
     </table>
 
