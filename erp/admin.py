@@ -43,7 +43,7 @@ class InvoiceAdmin(ImportExportModelAdmin):
             # NEW: Shipping Section with the checkbox description
             ('Shipping Details', {
                 'fields': ('shipping_name', 'shipping_address', 'shipping_state', 'shipping_gstin'),
-                'description': '<input type="checkbox" id="same_as_bill_to" checked style="margin-right:5px;"> <strong>Ship to same address as Customer?</strong> (Uncheck to edit)'
+                'description': '<input type="checkbox" id="same_as_bill_to" style="margin-right:5px;"> <strong>Ship to same address as Customer?</strong> (Uncheck to edit)'
             }),
         ]
         # Logic to only show Totals when editing (hides zeros on new invoices)
@@ -115,3 +115,11 @@ class ProductionAdmin(ImportExportModelAdmin):
         total = sum(item.quantity for item in obj.inputs.all())
         return f"{total} KGS"
     total_input_qty.short_description = "Total Input"
+
+@admin.register(InvoiceItem)
+class InvoiceItemAdmin(ImportExportModelAdmin):
+    # This lets you see specific line items in the admin and export them
+    list_display = ('invoice', 'product', 'quantity', 'rate', 'amount')
+    list_filter = ('product', 'invoice__date')
+    search_fields = ('invoice__invoice_number', 'product__name')
+
