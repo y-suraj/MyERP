@@ -154,10 +154,11 @@
 </head>
 
 <body>
-
     <div id="pageNumberContent" class="page-num-text">
         Page <pdf:pagenumber> of <pdf:pagecount>
     </div>
+
+    {% for copy_label in copies_list %}
 
     <table class="header-table">
         <tr>
@@ -171,6 +172,10 @@
                 </div>
             </td>
             <td width="40%" align="right">
+                <div
+                    style="font-size:10px; font-weight:100; font-style: italic; text-transform:uppercase; margin-bottom:5px;">
+                    ({{ copy_label }})
+                </div>
                 <h2 style="margin:0;">TAX INVOICE</h2>
                 <br>
                 <strong>Invoice No:</strong> {{ invoice.invoice_number }}<br>
@@ -290,11 +295,40 @@
     </table>
 
     <div class="signature-section">
-        __________________________<br>
-        <strong>For SURAJ INDUSTRIES</strong><br>
-        Authorised Signatory
+        <div
+            style="border: 2px solid #ccc; padding: 2px; width: 220px; float: right; font-family: Helvetica, sans-serif; position: relative;">
+
+            <table style="width: 100%; border: none;">
+                <tr>
+                    <td style="width: 40px; border: none; vertical-align: top; padding-top: 5px;">
+                        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4XiDAAAAZlBMVEUAAAAAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQAmcQOZ133AAAAIHRSTlMAGxcHIykQU4YzRoW8F/S1K8hG4sJm414I9VwY2yLq17F53zs0AAAAgUlEQVR42u3VqwqAMBAF0E0W/f/f1iC2WGUwDcy9YOGF4S0rF1LwM9I2m8W+M6Id35iWqM2JWrO9yZ6ZSo+M0J0eWcq7F7J6b4U83xshz/dGyPO9EfJ8b4Q83xshz/dGyPO9EfJ8b4Q83xshz/dGyPO9EfJ8b4Q83xshz/dGyPO9EfJ8b788H1w7Cg5Jq0iRAAAAAElFTkSuQmCC"
+                            width="30" height="30" />
+                    </td>
+
+                    <td style="border: none; vertical-align: top; padding-left: 5px;">
+                        <div style="font-size: 14px; font-weight: bold; margin-bottom: 2px;">Signature valid</div>
+                        <div style="font-size: 9px; color: #333; line-height: 1.3;">
+                            Digitally signed by <strong>G.R. Yadav</strong><br>
+                            Date: {% now "Y.m.d H:i:s" %} +05:30<br>
+                            Location: Vadodara
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div style="clear:both;"></div>
+
+        <div style="margin-top: 5px; font-size: 9px; text-align: right;">
+            (Authorised Signatory)
+        </div>
     </div>
 
+    {% if not forloop.last %}
+    <pdf:nextpage />
+    {% endif %}
+
+    {% endfor %}
 </body>
 
 </html>

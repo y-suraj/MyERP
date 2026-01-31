@@ -40,7 +40,8 @@ def generate_invoice_pdf(request, invoice_id):
         'invoice': invoice, 
         'amount_in_words': amount_in_words,
         'tax_rate': tax_rate,      # e.g., 18.00
-        'cgst_rate': cgst_rate     # e.g., 9.00
+        'cgst_rate': cgst_rate,     # e.g., 9.00
+        'copies_list': ['ORIGINAL FOR RECIPIENT', 'DUPLICATE FOR TRANSPORTER', 'TRIPLICATE FOR SUPPLIER']
     }
     template = get_template(template_path)
     html = template.render(context)
