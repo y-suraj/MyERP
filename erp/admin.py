@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.shortcuts import redirect
 from django.http import HttpResponseRedirect
 from django.contrib import messages
-from .models import Product, Party, Invoice, InvoiceItem, Production, ProductionInput
+from .models import Product, Party, Invoice, InvoiceItem, Production, ProductionInput, DeliveryChallan, ChallanItem, PaymentReceived
 
 # --- Product & Party Admins ---
 @admin.register(Product)
@@ -159,4 +159,61 @@ class ProductionAdmin(ImportExportModelAdmin):
         total = sum(item.quantity for item in obj.inputs.all())
         return f"{total} KGS"
     total_input_qty.short_description = "Total Input"
+
+# --- PAYMENT ADMIN ---
+@admin.register(PaymentReceived)
+class PaymentAdmin(ImportExportModelAdmin):
+    list_display = ('date', 'party', 'amount', 'mode', 'reference_number')
+    list_filter = ('party', 'date', 'mode')
+    search_fields = ('party__name', 'reference_number')
+
+# --- CHALLAN ADMIN ---
+class ChallanItemInline(admin.TabularInline):
+    model = ChallanItem
+    extra = 1
+
+@admin.register(DeliveryChallan)
+class DeliveryChallanAdmin(ImportExportModelAdmin):
+    list_display = ('challan_number', 'date', 'customer', 'vehicle_number', 'pdf_list_button')
+    search_fields = ('challan_number', 'customer__name', 'vehicle_number')
+    inlines = [ChallanItemInline]
+    
+    # --- 1. Add "Print" Button to the Form ---
+    readonly_fields = ('print_in_form',)
+
+    def print_in_form(self, obj):
+        if obj and obj.pk:
+            url = reverse('challan_pdf', args=[obj.pk])
+            return format_html(
+                '<a href="{}" target="_blank" style="background-color:#417690; color:white; padding:8px 15px; border-radius:5px; text-decoration:none; font-weight:bold;">'
+                '🖨️ PRINT CHALLAN PDF</a>', url
+            )
+        return "Save this challan first to print."
+    print_in_form.short_description = "Actions"
+    print_in_form.allow_tags = True
+
+    # --- 2. Organize the Form Layout ---
+    fieldsets = [
+        ('Actions', {
+            'fields': ('print_in_form',)  # Put the button at the very top
+        }),
+        ('Challan Details', {
+            'fields': ('challan_number', 'date', 'customer', 'po_number', 'vehicle_number', 'job_work_nature')
+        }),
+    ]
+
+    # --- 3. Button for the Dashboard List View ---
+    def pdf_list_button(self, obj):
+        return format_html('<a class="button" href="{}">Print</a>', reverse('challan_pdf', args=[obj.pk]))
+    pdf_list_button.short_description = 'Print'
+    pdf_list_button.allow_tags = True
+    list_display = ('challan_number', 'date', 'customer', 'vehicle_number', 'pdf_button')
+    search_fields = ('challan_number', 'customer__name', 'vehicle_number')
+    inlines = [ChallanItemInline]
+    
+    # Add the PRINT button
+    def pdf_button(self, obj):
+        return format_html('<a class="button" href="{}">Print Challan</a>', reverse('challan_pdf', args=[obj.pk]))
+    pdf_button.short_description = 'Actions'
+    pdf_button.allow_tags = True
 

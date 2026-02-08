@@ -5,7 +5,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from django.template.loader import get_template
 from xhtml2pdf import pisa
-from .models import Invoice
+from .models import Invoice, DeliveryChallan
 import openpyxl
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 from num2words import num2words
@@ -242,3 +242,22 @@ def import_page(request):
         return redirect('import_page')
 
     return render(request, 'erp/import_page.html')
+
+# --- CHALLAN PDF GENERATOR ---
+def generate_challan_pdf(request, challan_id):
+    challan = get_object_or_404(DeliveryChallan, pk=challan_id)
+    template_path = 'erp/challan_pdf.html'
+    context = {'challan': challan}
+    
+    response = HttpResponse(content_type='application/pdf')
+    filename = f"DC-{challan.challan_number}.pdf"
+    response['Content-Disposition'] = f'inline; filename="{filename}"'
+    
+    template = get_template(template_path)
+    html = template.render(context)
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    
+    if pisa_status.err:
+        return HttpResponse(f'We had some errors <pre>{html}</pre>')
+    return response
+

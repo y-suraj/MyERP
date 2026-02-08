@@ -141,3 +141,31 @@ def remove_rm_stock(sender, instance, created, **kwargs):
 def restore_rm_stock(sender, instance, **kwargs):
     instance.raw_material.current_stock += instance.quantity
     instance.raw_material.save()
+
+# --- NEW MODELS ---
+class DeliveryChallan(models.Model):
+    challan_number = models.CharField(max_length=20, unique=True)
+    date = models.DateField(default=timezone.now)
+    customer = models.ForeignKey(Party, on_delete=models.CASCADE)
+    po_number = models.CharField(max_length=50, blank=True, verbose_name="Order No / PO")
+    vehicle_number = models.CharField(max_length=20, blank=True)
+    job_work_nature = models.TextField(blank=True, verbose_name="Nature of Processing")
+
+    def __str__(self):
+        return f"DC-{self.challan_number}"
+
+class ChallanItem(models.Model):
+    challan = models.ForeignKey(DeliveryChallan, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True)
+    description = models.TextField(verbose_name="Particulars")
+    quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    remarks = models.CharField(max_length=100, blank=True)
+
+class PaymentReceived(models.Model):
+    date = models.DateField(default=timezone.now)
+    party = models.ForeignKey(Party, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    mode = models.CharField(max_length=50, default='Bank Transfer')
+    reference_number = models.CharField(max_length=50, blank=True)
+    remarks = models.TextField(blank=True)
+    
