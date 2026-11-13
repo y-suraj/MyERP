@@ -71,9 +71,9 @@ export_invoices_detailed.short_description = "Export Detailed Report (Excel)"
 
 @admin.register(Invoice)
 class InvoiceAdmin(ImportExportModelAdmin):
-    list_display = ('invoice_number', 'date', 'customer', 'grand_total', 'pdf_button')
-    search_fields = ('invoice_number', 'customer__name', 'po_number')
-    list_filter = ('date', 'customer')
+    list_display = ('invoice_number', 'financial_year', 'date', 'customer', 'grand_total', 'pdf_button')
+    search_fields = ('invoice_number', 'financial_year', 'customer__name', 'po_number')
+    list_filter = ('financial_year', 'date', 'customer')
     actions = [export_invoices_detailed]
     inlines = [InvoiceItemInline]
 

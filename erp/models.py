@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import UniqueConstraint
+import datetime
 from django.utils import timezone
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
@@ -40,13 +42,33 @@ class Product(models.Model):
     def __str__(self):
         return f"{self.name} | Stock: {self.current_stock} {self.unit}"
 
-# --- INVOICE MODELS ---
 
 # --- INVOICE MODELS ---
 
 class Invoice(models.Model):
-    invoice_number = models.CharField(max_length=20, unique=True)
+    invoice_number = models.CharField(max_length=20)
     date = models.DateField(default=timezone.now)
+    financial_year = models.CharField(max_length=9, blank=True, editable=False)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=['invoice_number', 'financial_year'],
+                name='unique_invoice_per_fy'
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.date:
+            year = self.date.year
+            month = self.date.month
+            # April to December falls in current_year-next_year
+            if month >= 4:
+                self.financial_year = f"{year}-{year + 1}"
+            # January to March falls in previous_year-current_year
+            else:
+                self.financial_year = f"{year - 1}-{year}"
+        super().save(*args, **kwargs)
     
     # UPDATE: Removed 'limit_choices_to'. Now shows ALL parties (Customer, Vendor, Both).
     customer = models.ForeignKey(Party, on_delete=models.CASCADE)
