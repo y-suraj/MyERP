@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import UniqueConstraint
 import datetime
@@ -57,6 +58,22 @@ class Invoice(models.Model):
                 name='unique_invoice_per_fy'
             )
         ]
+
+    def clean(self):
+        # Temporarily calculate financial year to check for duplicates
+        temp_fy = ""
+        if self.date:
+            year = self.date.year
+            month = self.date.month
+            if month >= 4:
+                temp_fy = f"{year}-{year + 1}"
+            else:
+                temp_fy = f"{year - 1}-{year}"
+        
+        # Check if an invoice with this number AND financial year already exists
+        # Exclude the current instance (self.pk) if we are editing an existing invoice
+        if Invoice.objects.filter(invoice_number=self.invoice_number, financial_year=temp_fy).exclude(pk=self.pk).exists():
+            raise ValidationError(f"Invoice number '{self.invoice_number}' already exists in financial year {temp_fy}.")
 
     def save(self, *args, **kwargs):
         if self.date:
