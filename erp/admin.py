@@ -72,7 +72,7 @@ export_invoices_detailed.short_description = "Export Detailed Report (Excel)"
 
 @admin.register(Invoice)
 class InvoiceAdmin(ImportExportModelAdmin):
-    list_display = ('invoice_number', 'fy_display', 'formatted_date', 'customer', 'grand_total', 'pdf_button')
+    list_display = ('inv_num_display', 'fy_display', 'formatted_date', 'customer', 'grand_total', 'pdf_button')
     search_fields = ('invoice_number', 'financial_year', 'customer__name', 'po_number')
     list_filter = ('financial_year', 'date', 'customer')
     actions = [export_invoices_detailed]
@@ -168,6 +168,13 @@ class InvoiceAdmin(ImportExportModelAdmin):
     
     formatted_date.short_description = "Date"
     formatted_date.admin_order_field = 'date'
+
+    # --- 7. COMPACT INVOICE NUMBER COLUMN ---
+    def inv_num_display(self, obj):
+        return obj.invoice_number
+    
+    inv_num_display.short_description = "Inv #"
+    inv_num_display.admin_order_field = 'invoice_number'  # Keeps the column sortable
 
 # --- FACTORY / PRODUCTION CONFIGURATION ---
 
