@@ -1,0 +1,15 @@
+Copyright (c) 2026 Suraj Yadav / Suraj Industries. All Rights Reserved.
+
+PROPRIETARY AND CONFIDENTIAL
+
+This software, named "MyERP", and its accompanying documentation are the proprietary and confidential property of Suraj Yadav. 
+
+1. GRANT OF LICENSE: This software is licensed, not sold. You are granted a non-exclusive, non-transferable, limited license to use the software strictly for internal business operations.
+2. RESTRICTIONS: You may NOT:
+   a. Copy, reproduce, or distribute the software.
+   b. Modify, adapt, translate, reverse engineer, decompile, or disassemble the software.
+   c. Sell, rent, lease, sublicense, or otherwise transfer rights to the software.
+   d. Remove any proprietary notices or labels on the software.
+3. OWNERSHIP: All title, ownership rights, and intellectual property rights in and to the software shall remain in the exclusive possession of Suraj Yadav.
+
+UNAUTHORIZED COPYING, MODIFICATION, OR DISTRIBUTION OF THIS SOFTWARE IS STRICTLY PROHIBITED AND MAY RESULT IN SEVERE CIVIL AND CRIMINAL PENALTIES.
