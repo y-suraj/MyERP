@@ -72,7 +72,7 @@ export_invoices_detailed.short_description = "Export Detailed Report (Excel)"
 
 @admin.register(Invoice)
 class InvoiceAdmin(ImportExportModelAdmin):
-    list_display = ('invoice_number', 'financial_year', 'date', 'customer', 'grand_total', 'pdf_button')
+    list_display = ('invoice_number', 'fy_display', 'formatted_date', 'customer', 'grand_total', 'pdf_button')
     search_fields = ('invoice_number', 'financial_year', 'customer__name', 'po_number')
     list_filter = ('financial_year', 'date', 'customer')
     actions = [export_invoices_detailed]
@@ -120,7 +120,14 @@ class InvoiceAdmin(ImportExportModelAdmin):
 
     # --- 3. DASHBOARD BUTTONS ---
     def pdf_button(self, obj):
-        return format_html('<a class="button" href="{}">PDF</a>&nbsp;<a class="button" href="{}" style="background-color:#28a745;">Excel</a>', reverse('invoice_pdf', args=[obj.pk]), reverse('invoice_excel', args=[obj.pk]))
+        return format_html(
+            '<span style="white-space: nowrap;">'
+            '<a class="button" href="{}">PDF</a>&nbsp;'
+            '<a class="button" href="{}" style="background-color:#28a745;">Excel</a>'
+            '</span>', 
+            reverse('invoice_pdf', args=[obj.pk]), 
+            reverse('invoice_excel', args=[obj.pk])
+        )
     pdf_button.short_description = 'Actions'
     pdf_button.allow_tags = True
 
@@ -142,6 +149,25 @@ class InvoiceAdmin(ImportExportModelAdmin):
         invoice.igst_total = igst
         invoice.grand_total = total + cgst + sgst + igst
         invoice.save()
+    
+    # --- 5. COMPACT FINANCIAL YEAR COLUMN ---
+    def fy_display(self, obj):
+        if obj.financial_year and len(obj.financial_year) == 9:
+            fy = f"{obj.financial_year[2:4]}-{obj.financial_year[7:9]}"
+            return format_html('<span style="white-space: nowrap;">{}</span>', fy)
+        return obj.financial_year
+    
+    fy_display.short_description = "FY"
+
+    # --- 6. CUSTOM DATE FORMAT ---
+    def formatted_date(self, obj):
+        if obj.date:
+            date_str = obj.date.strftime('%d-%b-%y')
+            return format_html('<span style="white-space: nowrap;">{}</span>', date_str)
+        return "-"
+    
+    formatted_date.short_description = "Date"
+    formatted_date.admin_order_field = 'date'
 
 # --- FACTORY / PRODUCTION CONFIGURATION ---
 
