@@ -50,6 +50,7 @@ class Invoice(models.Model):
     invoice_number = models.CharField(max_length=20)
     date = models.DateField(default=timezone.now)
     financial_year = models.CharField(max_length=9, blank=True, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         constraints = [
